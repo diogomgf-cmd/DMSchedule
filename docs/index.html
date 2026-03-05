@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1f2937">
+  <title>OurApp - D & M</title>
+  <link rel="manifest" href="static/manifest.json">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="config/emailjs.js"></script>
+  <link rel="stylesheet" href="css/style.css?v=22">
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen pb-20">
+  <!-- Password Overlay -->
+  <div id="passwordOverlay" class="fixed inset-0 bg-gray-900 z-50 flex items-center justify-center p-4">
+    <div class="bg-gray-800 rounded-xl p-6 w-full max-w-sm text-center">
+      <i data-lucide="lock" class="w-12 h-12 text-emerald-400 mx-auto mb-4"></i>
+      <h2 class="text-xl font-semibold mb-2">D & M App</h2>
+      <p id="passwordPrompt" class="text-gray-400 mb-4">Enter password to continue</p>
+      
+      <!-- Step 1: Email input for forgot password -->
+      <div id="resetStep1" class="hidden">
+        <input type="email" id="emailInput" class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 focus:border-emerald-500 focus:outline-none text-center text-lg mb-3" placeholder="Your email">
+        <button id="sendCodeBtn" class="w-full py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 transition font-medium">Send Code</button>
+        <button id="backToLoginBtn" class="w-full py-2 text-gray-400 hover:text-gray-300 text-sm mt-3">Back to Login</button>
+      </div>
+      
+      <!-- Step 2: Enter code + new password -->
+      <div id="resetStep2" class="hidden">
+        <p id="codeSentTo" class="text-gray-400 text-sm mb-3"></p>
+        <input type="text" id="codeInput" class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 focus:border-emerald-500 focus:outline-none text-center text-lg mb-3" placeholder="Enter 6-digit code" maxlength="6">
+        <input type="password" id="newPasswordInput" class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 focus:border-emerald-500 focus:outline-none text-center text-lg mb-4" placeholder="New password">
+        <button id="resetPasswordBtn" class="w-full py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 transition font-medium">Reset Password</button>
+        <button id="resendCodeBtn" class="w-full py-2 text-gray-400 hover:text-gray-300 text-sm mt-2">Resend Code</button>
+      </div>
+      
+      <!-- Normal login -->
+      <div id="loginStep">
+        <input type="email" id="loginEmailInput" class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 focus:border-emerald-500 focus:outline-none text-center text-lg mb-3 hidden" placeholder="Your email">
+        <input type="password" id="passwordInput" class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 focus:border-emerald-500 focus:outline-none text-center text-lg mb-4" placeholder="Password">
+        <button id="passwordSubmit" class="w-full py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 transition font-medium">Continue</button>
+        <button id="forgotPasswordBtn" class="w-full py-2 text-gray-400 hover:text-gray-300 text-sm mt-2 hidden">Forgot Password?</button>
+      </div>
+      
+      <p id="passwordError" class="text-red-400 text-sm mt-3 hidden"></p>
+    </div>
+  </div>
+
+  <!-- Desktop Sidebar -->
+  <aside id="sidebar" class="fixed left-0 top-0 bottom-0 w-64 bg-gray-800 border-r border-gray-700 z-50 hidden lg:flex flex-col">
+    <div class="p-5 border-b border-gray-700">
+      <h1 class="text-xl font-semibold text-gray-100">D & M</h1>
+      <button id="userToggleSidebar" class="mt-3 w-full flex items-center justify-between px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white transition">
+        <span>User: D</span>
+        <i data-lucide="repeat" class="w-4 h-4"></i>
+      </button>
+    </div>
+    <nav class="flex-1 p-3 flex flex-col gap-1">
+      <button type="button" class="sidebar-nav-btn tab-btn flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-gray-100 transition w-full text-left" data-tab="schedule">
+        <i data-lucide="calendar" class="w-5 h-5"></i>
+        <span>Schedule</span>
+      </button>
+      <button type="button" class="sidebar-nav-btn tab-btn flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-gray-100 transition w-full text-left" data-tab="calendar">
+        <i data-lucide="calendar-days" class="w-5 h-5"></i>
+        <span>Calendar</span>
+      </button>
+      <button type="button" class="sidebar-nav-btn tab-btn flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-gray-100 transition w-full text-left" data-tab="budget">
+        <i data-lucide="wallet" class="w-5 h-5"></i>
+        <span>Budget</span>
+      </button>
+      <button type="button" class="sidebar-nav-btn tab-btn flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-gray-100 transition w-full text-left" data-tab="groceries">
+        <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+        <span>Groceries</span>
+      </button>
+      <button type="button" class="sidebar-nav-btn tab-btn flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-gray-100 transition w-full text-left" data-tab="gym">
+        <i data-lucide="dumbbell" class="w-5 h-5"></i>
+        <span>Gym</span>
+      </button>
+    </nav>
+    <div class="p-3 border-t border-gray-700">
+      <button id="alarmBtnSidebar" class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-gray-100 transition text-sm">
+        <i data-lucide="bell" class="w-5 h-5"></i>
+        <span>Enable Alarms</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Mobile Header -->
+  <header class="fixed top-0 left-0 right-0 bg-gray-800 border-b border-gray-700 z-40 px-4 py-3 flex justify-between items-center lg:left-64">
+    <h1 class="text-lg font-semibold text-gray-100">D & M</h1>
+    <div class="flex items-center gap-2 lg:hidden">
+      <button id="alarmBtn" class="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition" title="Enable Alarms">
+        <i data-lucide="bell" class="w-5 h-5"></i>
+      </button>
+      <button id="userToggle" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 transition text-sm font-medium">
+        User: D
+      </button>
+    </div>
+  </header>
+
+  <main class="pt-16 px-2 pb-4 lg:pl-72 lg:pr-6">
+    <!-- Schedule Tab -->
+    <div id="scheduleTab" class="tab-content">
+      <div class="flex justify-between items-center mb-4 px-2">
+        <h2 class="text-xl font-semibold">Schedule</h2>
+        <button id="applyMultiBtn" class="hidden px-3 py-1.5 rounded-lg bg-yellow-600 hover:bg-yellow-500 text-sm font-medium">
+          Apply to <span id="selectedCount">0</span> cells
+        </button>
+      </div>
+      <div class="schedule-labels text-center text-xs text-gray-400 mb-1">Mon → Sun (D) | Mon → Sun (M)</div>
+      <div class="schedule-container overflow-x-auto">
+        <div id="scheduleGrid" class="schedule-grid"></div>
+      </div>
+    </div>
+
+    <!-- Calendar Tab -->
+    <div id="calendarTab" class="tab-content hidden">
+      <div class="mb-4">
+        <h2 class="text-xl font-semibold mb-3 px-2">Calendar 2026</h2>
+        <div id="monthTabs" class="flex flex-wrap gap-1 px-2"></div>
+      </div>
+      <div id="calendarGrid" class="calendar-grid px-2"></div>
+    </div>
+
+    <!-- Budget Tab -->
+    <div id="budgetTab" class="tab-content hidden">
+      <div class="mb-4">
+        <h2 class="text-xl font-semibold mb-3 px-2">Budget</h2>
+        
+        <div class="grid grid-cols-2 gap-4 lg:gap-6 budget-grid">
+          <!-- D's Budget (Left) -->
+          <div id="budgetDContainer" class="bg-gray-800 rounded-lg p-3">
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="text-blue-400 font-medium">D's Budget</h3>
+              <div class="flex gap-1">
+                <button id="clearBudgetDBtn" class="p-1.5 rounded bg-red-600 hover:bg-red-500" title="Clear All">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+                <button id="addBudgetDBtn" class="p-1.5 rounded bg-emerald-600 hover:bg-emerald-500" title="Add">
+                  <i data-lucide="plus" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+            <div id="budgetDList" class="space-y-1"></div>
+            <div class="mt-2 pt-2 border-t border-gray-700 flex justify-between">
+              <span class="text-gray-400">Total:</span>
+              <span id="budgetDTotal" class="text-blue-400 font-bold">0.00€</span>
+            </div>
+          </div>
+
+          <!-- M's Budget (Right) -->
+          <div id="budgetMContainer" class="bg-gray-800 rounded-lg p-3">
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="text-pink-400 font-medium">M's Budget</h3>
+              <div class="flex gap-1">
+                <button id="clearBudgetMBtn" class="p-1.5 rounded bg-red-600 hover:bg-red-500" title="Clear All">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+                <button id="addBudgetMBtn" class="p-1.5 rounded bg-emerald-600 hover:bg-emerald-500" title="Add">
+                  <i data-lucide="plus" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+            <div id="budgetMList" class="space-y-1"></div>
+            <div class="mt-2 pt-2 border-t border-gray-700 flex justify-between">
+              <span class="text-gray-400">Total:</span>
+              <span id="budgetMTotal" class="text-pink-400 font-bold">0.00€</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Groceries Tab -->
+    <div id="groceriesTab" class="tab-content hidden">
+      <div class="flex justify-between items-center mb-4 px-2">
+        <h2 class="text-xl font-semibold">Groceries</h2>
+        <div class="flex gap-2">
+          <button id="clearGroceriesBtn" class="p-2 rounded-lg bg-red-600 hover:bg-red-500" title="Clear All">
+            <i data-lucide="trash-2" class="w-5 h-5"></i>
+          </button>
+          <button id="addGroceryBtn" class="p-2 rounded-lg bg-emerald-600 hover:bg-emerald-500">
+            <i data-lucide="plus" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+      <div id="groceriesList" class="space-y-2 px-2"></div>
+    </div>
+
+    <!-- Gym Tab -->
+    <div id="gymTab" class="tab-content hidden">
+      <div class="flex justify-between items-center mb-4 px-2">
+        <h2 class="text-xl font-semibold">Gym</h2>
+        <div class="flex gap-2">
+          <button id="clearGymBtn" class="p-2 rounded-lg bg-red-600 hover:bg-red-500" title="Clear All">
+            <i data-lucide="trash-2" class="w-5 h-5"></i>
+          </button>
+          <button id="addGymWorkoutBtn" class="p-2 rounded-lg bg-emerald-600 hover:bg-emerald-500">
+            <i data-lucide="plus" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+      <div id="gymList" class="space-y-2 px-2"></div>
+    </div>
+  </main>
+
+  <!-- Mobile Bottom Navigation -->
+  <nav class="bottom-nav fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 z-40 lg:hidden">
+    <div class="flex justify-around py-2">
+      <button type="button" class="tab-btn flex flex-col items-center p-2 text-emerald-400" data-tab="schedule">
+        <i data-lucide="calendar" class="w-6 h-6"></i>
+        <span class="text-xs mt-1">Schedule</span>
+      </button>
+      <button type="button" class="tab-btn flex flex-col items-center p-2 text-gray-400" data-tab="calendar">
+        <i data-lucide="calendar-days" class="w-6 h-6"></i>
+        <span class="text-xs mt-1">Calendar</span>
+      </button>
+      <button type="button" class="tab-btn flex flex-col items-center p-2 text-gray-400" data-tab="budget">
+        <i data-lucide="wallet" class="w-6 h-6"></i>
+        <span class="text-xs mt-1">Budget</span>
+      </button>
+      <button type="button" class="tab-btn flex flex-col items-center p-2 text-gray-400" data-tab="groceries">
+        <i data-lucide="shopping-cart" class="w-6 h-6"></i>
+        <span class="text-xs mt-1">Groceries</span>
+      </button>
+      <button type="button" class="tab-btn flex flex-col items-center p-2 text-gray-400" data-tab="gym">
+        <i data-lucide="dumbbell" class="w-6 h-6"></i>
+        <span class="text-xs mt-1">Gym</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Modal -->
+  <div id="modal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-gray-800 rounded-xl p-6 w-full max-w-sm">
+      <h3 id="modalTitle" class="text-lg font-semibold mb-4"></h3>
+      <div id="modalContent"></div>
+      <div class="flex gap-3 mt-6">
+        <button id="modalCancel" class="flex-1 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition">Cancel</button>
+        <button id="modalSave" class="flex-1 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 transition">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="config/firebase.js"></script>
+  <script src="utils/constants.js"></script>
+  <script src="utils/validators.js"></script>
+  <script src="data/firestore.js"></script>
+  <script src="core/state.js"></script>
+  <script src="core/schedule.js"></script>
+  <script src="core/calendar.js"></script>
+  <script src="core/budget.js"></script>
+  <script src="core/grocery.js"></script>
+  <script src="core/gym.js"></script>
+  <script src="services/auth.js"></script>
+  <script src="services/notifications.js"></script>
+  <script src="ui/tabs.js"></script>
+  <script src="ui/auth-ui.js"></script>
+  <script src="ui/modals.js"></script>
+  <script src="ui/grids/schedule.js"></script>
+  <script src="ui/grids/calendar.js"></script>
+  <script src="ui/grids/budget.js"></script>
+  <script src="ui/grids/grocery.js"></script>
+  <script src="ui/grids/gym.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

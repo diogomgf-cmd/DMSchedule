@@ -1,15 +1,17 @@
-const CACHE_NAME = 'ourapp-v1';
+const CACHE_NAME = 'ourapp-v12';
 const ASSETS = [
   './',
   './index.html',
-  './style.css',
-  './app.js',
-  './firebase-config.js',
+  './css/style.css',
+  './js/app.js',
+  './js/firebase-config.js',
+  './js/emailjs-config.js',
   './manifest.json',
   'https://cdn.tailwindcss.com',
   'https://unpkg.com/lucide@latest',
   'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js',
-  'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js'
+  'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js',
+  'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js'
 ];
 
 self.addEventListener('install', (event) => {
