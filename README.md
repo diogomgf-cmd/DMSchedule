@@ -1,14 +1,16 @@
 # D & M Schedule
 
-A shared schedule and task management app for D & M.
+A shared schedule and task management app for D & M with real-time sync.
 
 ## Features
 
-- **Schedule**: Weekly schedule grid for both users, side by side
-- **Calendar**: Monthly calendar view for 2026 with events
+- **Schedule**: Weekly grid for both users with drag-to-select
+- **Calendar**: Monthly calendar for 2026 with color-coded events
 - **Budget**: Split budget tracking for D and M
 - **Groceries**: Shared grocery list with quantity support
+- **Gym**: User-based workout plans with exercises
 - **Password Protection**: Secure access with shared password
+- **Installable**: Works offline as a PWA
 
 ## Getting Started
 
@@ -20,7 +22,7 @@ A shared schedule and task management app for D & M.
    npx serve -p 3000
    ```
 
-2. Open http://localhost:3000 in your browser
+2. Open http://localhost:3000
 
 ### First-Time Setup
 
@@ -32,45 +34,50 @@ A shared schedule and task management app for D & M.
 
 ### Switching Users
 
-Click the user toggle button in the top-right corner to switch between D and M. The active user's schedule is editable; the other user's schedule is visible but read-only.
+Click the user toggle in the top-right corner to switch between D and M. The active user's data is editable; the other user's is visible but read-only.
 
 ### Schedule
 
 - Click an empty cell to add an event
-- Click a filled cell to edit or delete an event
-- Click and drag to select multiple cells, then click "Apply" to add an event to all selected cells
+- Click a filled cell to edit or delete
+- Drag to select multiple cells, then click "Apply" to add an event to all
 
 ### Calendar
 
 - Click any day to add an event
-- Click an existing event to edit or delete it
+- Click an event to edit or delete
 - Events are color-coded by user (blue for D, pink for M)
 
 ### Budget
 
 - Add items with name and cost
-- Click on any item to edit inline
-- Click the X to delete an item
+- Click an item to edit inline
+- Click the X to delete
 - View totals for each user
 
 ### Groceries
 
 - Add items with optional quantity (e.g., "2x Milk")
-- Click the circle to mark as complete
-- Click the X to delete an item
+- Click the circle to mark complete
+- Click the X to delete
+
+### Gym
+
+- Add workout plans (e.g., "Push Day", "Pull Day")
+- Add exercises with name, duration, reps, and weight
+- Drag to reorder exercises within a workout
+- Drag workouts to reorder them
 
 ## Password Recovery
-
-If you forget your password:
 
 1. Click "Forgot Password?"
 2. Enter your registered email
 3. Check your email for a 6-digit code
-4. Enter the code and a new password
+4. Enter the code and set a new password
 
 ## Install as App
 
-This is a Progressive Web App (PWA). When you visit the site on a mobile device or desktop, you can install it for offline access:
+This is a Progressive Web App (PWA):
 
 - **Chrome/Edge**: Click the install icon in the address bar
 - **Safari (iOS)**: Tap Share → Add to Home Screen
